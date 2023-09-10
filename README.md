@@ -11,28 +11,18 @@ Convert from logs from Pokemon Online and Shoddy to replays from Pokemon Showdow
 - [ ] Start developing (currently testing RegEx patterns)
 
 ### Patterns to be implemented:
-Damage via leech seed
-```
-THE DADDY KITH's Bronzong's health is sapped by leech seed.
-```
-Focus punch tightening
 
-```
-Snorlax is tightening its focus!
-```
+ardorin-boudouche-gen4ou - Focus Sash<br>
+crashingboombang-mangonation-gen3ou - Focus Punch, Flinch<br>
+highimpulse-ciele-gen3ou - Clear Body<br>
+highimpulse-ciele-gen4ou - Bounce<br>
+pimpmygo-Malekith-gen3ou - Non-modern Wish<br>
+pimpmygo-Malekith-gen4ou - Rain Dance<br>
+pasy-annoyer-gen4-nu / hvislysettaross-dolcefarniente-gen4ou - Chesto Berry / Resist Berry<br>
 
-"Static" Recovery via Rest and \< gen 5 wish, healing wish
-```
-The healing wish came true!
-THE DADDY KITH's Conkeldurr regained health!
-Jirachi's wish came true!
-```
 
-##### Abilities
-```
-Blue_Star's Poison Point activates!
-```
 ### Things to Solve
+
 Life Orb recoil doesn't appear in the chat
 ```
 Earthworm sent out Tyranitar!
@@ -57,18 +47,26 @@ Jolteon's wish came true!
 ```
 I don't have access to Gen 5 logs at the moment, so I don't know if it tells how much a Pokemon heals by with Wish. If not, Wish mechanics could produce uncertainty in the replay, and if there's one thing I want to avoid, it's misrepresenting historic battles.
 
-Baton Pass
-```
-The foe's Zapdos used Baton Pass!
-Snorlax used Body Slam!
-It's not very effective...
-The foe's Tyranitar's substitute took the damage!
-```
-
-Passive recovery
+Leech Seed
 ```
 THE DADDY KITH's Bronzong's health is sapped by leech seed.
 ```
-Weather reliant recovery?
+Pain Split
+```
+NEGRITO BANANA's Rotom-W used Pain Split!
+The battlers shared their pain!
+```
+
+Recoil
+```
+Sweepage's SoulWind is damaged by recoil!
+```
+
+Tier ambiguity
+Sometimes the tier shows up just as "Overused" which causes replays to be generated with "Gen -1 OU"
+Battle logs effected: boudouche-absurd-gen5ou, negritobanana-sweepage-gen5ou, nicedognicedog-alf-gen5ou
+
+Errors
+ardorin-boudouche-gen5ou and boudouche-absurd-gen4ou have whirlwind broken, `Cannot tell who the mon is.`
 
 Better Build system for building working html files with replays
