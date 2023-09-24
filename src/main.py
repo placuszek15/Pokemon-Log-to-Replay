@@ -18,6 +18,7 @@ players = []
 is_phased = False
 phase_hazard_list = []
 moves_buffer = []
+wishers = {0:'',1:''}
 
 
 # Function that defines how I output each line
@@ -144,6 +145,8 @@ def analyze_line(line: str) -> str:
     encore_pat = re.compile("(.*) received an encore!")
     substitute_start_pat = re.compile("(.*) made a substitute!")
     substitute_end_pat = re.compile("(.*) substitute faded!")
+    substitute_hit_pat = re.compile("(.*) substitute took the damage!")
+    substitute_hit_inverted_pat = re.compile("The substitute took damage for (.*)")
     reflect_start_pat = re.compile('Reflect raised (.*) team defense!')
     reflect_end_pat = re.compile('(.*) reflect wore off!')
     protect_pat = re.compile('(.*) protected itself!')
@@ -151,6 +154,13 @@ def analyze_line(line: str) -> str:
     taunt_end_pat = re.compile("(.*) taunt ended!")
     trick_item_pat = re.compile("(.*) obtained one (.*)!")
     trick_activate_pat = re.compile("(.*) switched items with (.*)!")
+    focus_punch_pat = re.compile("(.*) is tightening its focus!")
+    focus_sash_pat = re.compile("(.*) hung on using its Focus Sash!")
+    resist_berry_pat = re.compile("(.*)'s (.*) weakened (.*) power!")
+    status_berry_pat = re.compile("(.*) ate its (.*)!")
+    bounced_pat = re.compile("(.*) sprang up!")
+    status_cleared_lum_pat = re.compile("(.*) status cleared!")
+
 
     stealth_rock_dmg_pat = re.compile(r'Pointed stones dug into (.*)!')
     spikes_dmg_pat = re.compile("(.*) (was|is) hurt by spikes!")
@@ -166,13 +176,17 @@ def analyze_line(line: str) -> str:
 
     full_para_pat = re.compile("(.*) is paralyzed! It can't move!")
     frozen_solid_pat = re.compile("(.*) is frozen solid!")
+    confused_pat = re.compile("(.*) became confused!")
     is_poisoned_pat = re.compile("(.*) is already poisoned.")
+    is_parad_pat = re.compile("(.*) is already paralyzed.")
     # Don't have a replay where a Pokemon thaws out
+
 
     damage_dealt_pat = re.compile("[0-9.]+\% of")
 
     landed_pat = re.compile("(.*) landed on the ground!")
     heal_pat = re.compile("(.*) regained health!")
+    wish_pat = re.compile("(.*)'s wish came true!")
 
     boosted_stat_one_level_pat = re.compile('(.*) rose!')
     lowered_stat_one_level_pat = re.compile('(.*) fell!')
@@ -180,10 +194,12 @@ def analyze_line(line: str) -> str:
     boosted_stat_two_level_pat = re.compile('(.*) sharply rose!')
 
     immune_pat = re.compile("It had no effect on (.*)!")
+    immune_doesnot_pat = re.compile("It doesn't effect (.*)...")
     flash_fire_pat = re.compile('(.*) Flash Fire raised the power of its Fire-type moves!')
     miss_pat = re.compile('The attack (.*) missed!')
     miss_pat_avoid = re.compile('(.*) avoided the attack!')
     has_sub_pat = re.compile("(.*) already has a substitute.")
+    flinch_pat = re.compile('(.*) flinched and couldn\'t move!')
 
     intim_pat = re.compile("(.*) intimidates (.*)")
 
@@ -194,10 +210,16 @@ def analyze_line(line: str) -> str:
     # yes there is a typo, yes its intended
     failed_pat_typo = "But if failed!"
     failed_pat = "But it failed!"
+    rain_start_pat = "It started to rain!"
+    rain_stop_pat = "The rain stopped."
+
+
+
 
     converted = '|'
     if battle_started_pat.match(line):
         match = battle_started_pat.match(line)
+        
         if match:
             names = [match.group(1), match.group(2)]
             players = [utils.SimpleTrainer(name) for name in names]
@@ -344,12 +366,29 @@ def analyze_line(line: str) -> str:
         converted = f"|-singleturn|p{target_player+1}a: {target_mon.nick}|move: Roost"
 
     elif heal_pat.match(line):
-        move, use_player, target_player, use_mon, target_mon = moves_buffer
+        # TODO: Recognize Leech Seed 
+        target_player = identify_player(line, heal_pat)
+        target_mon = players[target_player].currentmon
         target_mon.heal(50.0)
         converted = f"|-heal|p{target_player+1}a: {target_mon.nick}|{target_mon.approx_hp()}\/100{target_mon.space_status()}"
 
+    elif status_cleared_lum_pat.match(line):
+        target = identify_player(line, status_cleared_lum_pat)
+        target_mon = players[target].currentmon
+        if target_mon.status != utils.Status.NONE:
+            target_mon.status = utils.Status.NONE
+            converted = f'|-curestatus|p{target + 1}a: {target_mon.nick}|{target_mon.status_string()}|[msg]'
+        else:
+            converted = f"|-end|p{target + 1}a: {target_mon.nick}|confusion"
 
 
+    elif wish_pat.match(line):
+        if gen == 5:
+            raise Exception("Wish is not implemented for gen 5 logs.")
+        target = identify_player(line, wish_pat)
+        target_mon = players[target].currentmon
+        target_mon.heal(50)
+        converted = f"|-heal|p{target+1}a: {target_mon.nick}|{target_mon.approx_hp()}\/100{target_mon.space_status()}|[from] move: Wish|[wisher] {wishers[target]}"
 
     elif not_very_effective_pat == line:
         move, use_player, target_player, use_mon, target_mon = moves_buffer
@@ -379,10 +418,10 @@ def analyze_line(line: str) -> str:
         move, use_player, target_player, use_mon, target_mon = moves_buffer
         converted = f'|-crit|p{target_player+1}a: {target_mon.nick}'
 
-    elif failed_pat in line or failed_pat_typo in line or is_poisoned_pat.match(line) or has_sub_pat.match(line):
+    elif failed_pat in line or failed_pat_typo in line or is_poisoned_pat.match(line) or has_sub_pat.match(line) \
+         or is_parad_pat.match(line):
         move, use_player, target_player, use_mon, target_mon = moves_buffer
         converted = f'|-fail|p{use_player+1}a: {use_mon.nick}|{move}'
-
 
     elif miss_pat.match(line) or miss_pat_avoid.match(line):
         move, use_player, target_player, use_mon, target_mon = moves_buffer
@@ -392,7 +431,7 @@ def analyze_line(line: str) -> str:
         move, use_player, target_player, use_mon, target_mon = moves_buffer
         converted = f'|-supereffective|p{target_player+1}a: {target_mon.nick}'
 
-    elif immune_pat.match(line) or immune_no_info_pat in line:
+    elif immune_pat.match(line) or immune_doesnot_pat.match(line) or immune_no_info_pat in line:
         move, use_player, target_player, use_mon, target_mon = moves_buffer
         converted = f'|-immune|p{target_player+1}a: {target_mon.nick}'
 
@@ -429,6 +468,7 @@ def analyze_line(line: str) -> str:
     elif intim_pat.match(line):
         user = identify_player(line, intim_pat)
         converted = f'|-ability|p{user+1}a: {players[user].currentmon.nick}|Intimidate|boost'
+
     elif flash_fire_pat.match(line):
         user = identify_player(line, flash_fire_pat)
         converted = (
@@ -451,6 +491,7 @@ def analyze_line(line: str) -> str:
         use_player = identify_player(line, move_used_pat)
         match = move_used_pat.match(line)
         move = ''
+        
         if match:
             target_player = -1
             move = match.group(2)
@@ -483,6 +524,7 @@ def analyze_line(line: str) -> str:
                 target_player = int(not use_player)
             use_mon = players[use_player].currentmon
             target_mon = players[target_player].currentmon
+
             if use_mon and target_mon:
                 converted = (
                     f'|move|p{use_player + 1}a: {use_mon.nick}|{move}|'
@@ -490,6 +532,8 @@ def analyze_line(line: str) -> str:
                 )
             if move in {'Whirlwind', 'Roar', 'Dragon Tail', 'Circle Throw'}:
                 is_phased = True
+            if move == "Wish":
+                wishers[use_player] = use_mon.nick
 
         # TODO: Implement damage, secondary effects, etc. of moves
         moves_buffer = (move, use_player, target_player, use_mon, target_mon)
@@ -591,6 +635,10 @@ def analyze_line(line: str) -> str:
                 rf'|-weather|Sandstorm|[from] ability: Sand Stream|'
                 rf'[of] p{player + 1}a: {mon.nick}'
             )
+    elif line == rain_start_pat:
+        converted = '|-weather|Rain Dance'
+    elif line == rain_stop_pat: 
+        converted = '|-weather|none'
 
     elif line == 'The sunlight is strong.':
         converted = '|-weather|SunnyDay|[upkeep]'
@@ -648,6 +696,11 @@ def analyze_line(line: str) -> str:
         mon = players[player].currentmon
         if mon:
             converted = f'|cant|p{player + 1}a: {mon.nick}|{mon.status_string()}'
+    elif flinch_pat.match(line):
+        player = identify_player(line, flinch_pat)
+        mon = players[player].currentmon
+        if mon:
+            converted = f'|cant|p{player + 1}a: {mon.nick}|flinch'
 
     elif woke_up_pat.match(line):
         player = identify_player(line, woke_up_pat)
@@ -684,6 +737,42 @@ def analyze_line(line: str) -> str:
         mon = players[player].currentmon
         if mon:
             converted = f'|-start|p{player + 1}a: {mon.nick}|Encore'
+
+    elif focus_punch_pat.match(line):
+        player = identify_player(line, focus_punch_pat)
+        mon = players[player].currentmon
+        if mon:
+            converted = f'|-singleturn|p{player + 1}a: {mon.nick}|move: Focus Punch'
+
+    elif focus_sash_pat.match(line):
+        player = identify_player(line, focus_sash_pat)
+        mon = players[player].currentmon
+        converted = f'|-enditem|p{player + 1}a: {mon.nick}|Focus Sash'
+
+    elif confused_pat.match(line):
+        player = identify_player(line, confused_pat)
+        mon = players[player].currentmon
+        converted = f'|-start|p{player + 1}a: {mon.nick}|Confusion'        
+
+    elif resist_berry_pat.match(line):
+        player = identify_player(line, resist_berry_pat)
+        mon = players[player].currentmon
+        berry = resist_berry_pat.match(line).group(2)
+        converted = (f'|-enditem|p{player + 1}a: {mon.nick}|{berry}|[eat]\n'
+            f'|-enditem|p{player + 1}a: {mon.nick}|{berry}|[weaken]')
+
+    elif status_berry_pat.match(line):
+        player = identify_player(line, status_berry_pat)
+        mon = players[player].currentmon
+        berry = status_berry_pat.match(line).group(2)
+        converted = f'|-enditem|p{player + 1}a: {mon.nick}|{berry}|[eat]'
+
+    elif bounced_pat.match(line):
+        player = identify_player(line, bounced_pat)
+        mon = players[player].currentmon
+        converted = (f'|move|p{player+1}a: {mon.nick}|Bounce||[still]\n'
+            f'|-prepare|p{player+1}a: {mon.nick}|Bounce')
+            
     elif substitute_start_pat.match(line):
         player = identify_player(line, substitute_start_pat)
         mon = players[player].currentmon
@@ -693,6 +782,15 @@ def analyze_line(line: str) -> str:
                 f'|-start|p{player + 1}a: {mon.nick}|Substitute\n'
                 f'|-damage|p{player + 1}a: {mon.nick}|{mon.approx_hp()}\/100{mon.space_status()}'
             )
+    elif substitute_hit_pat.match(line):
+        player = identify_player(line, substitute_hit_pat)
+        mon = players[player].currentmon
+        converted = f'|-activate|p{player+1}a: {mon.nick}|move: Substitute|[damage]'
+    elif substitute_hit_inverted_pat.match(line):
+        player = identify_player(line, substitute_hit_inverted_pat)
+        mon = players[player].currentmon
+        converted = f'|-activate|p{player+1}a: {mon.nick}|move: Substitute|[damage]'
+
     elif substitute_end_pat.match(line):
         player = identify_player(line, substitute_end_pat)
         mon = players[player].currentmon
