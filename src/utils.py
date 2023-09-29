@@ -82,6 +82,13 @@ class LifeOrbOddity():
         self.nick = nick
         self.turns_damaged = 0
 
+class RecoilOddity():
+    def __init__(self, nick):
+        self.nick = nick
+        self.missing_hp = 0 
+        self.turns_damaged = 0
+    def get_approximate_health(self):
+        return self.missing_hp / self.turns_damaged
 
 
 
@@ -96,6 +103,7 @@ class SimplePokemon():
         self.status = Status.NONE
         self.toxic_turns = 0
         self.is_seeded = False
+        self.used_recoil = False
 
     def damage(self, amt: float) -> None:
         self.hp -= amt
