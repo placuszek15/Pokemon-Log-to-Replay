@@ -450,9 +450,10 @@ NEGRITO BANANA's Celebi used Hidden Power!
 Sweepage's BKChicken lost 17% of its health!
 
 Sweepage's BKChicken used Whirlwind!
+NEGRITO BANANA's Tyranitar was dragged out!
 NEGRITO BANANA's Tyranitar is hurt by spikes!
 NEGRITO BANANA's Tyranitar fainted!
-NEGRITO BANANA's Tyranitar was dragged out!
+
 
 The sandstorm rages.
 Sweepage's BKChicken restored a little HP using its Leftovers!
@@ -513,9 +514,10 @@ NEGRITO BANANA's Scizor landed on the ground!
 NEGRITO BANANA's Scizor regained health!
 
 Sweepage's BKChicken used Whirlwind!
+NEGRITO BANANA's Celebi was dragged out!
 NEGRITO BANANA's Celebi is hurt by spikes!
 NEGRITO BANANA's Celebi fainted!
-NEGRITO BANANA's Celebi was dragged out!
+
 
 The sandstorm rages.
 Sweepage's BKChicken restored a little HP using its Leftovers!

@@ -294,7 +294,7 @@ It's not very effective...
 A critical hit!
 Cat Black's Life Aquatic lost 67% of its health!
 Cat Black's Life Aquatic ate its Salac Berry!
-The Salac Berry raised Cat Black's Life Aquatic's Speed!
+Cat Black's Life Aquatic's Speed rose! 
 
 The sandstorm rages.
 sendo-san: yum

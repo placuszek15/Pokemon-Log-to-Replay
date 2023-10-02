@@ -754,7 +754,7 @@ Heracross is hurt by spikes!
 The foe's Gengar used Ice Punch!
 Heracross lost 104 HP! (34% of its health)
 Heracross ate its Salac Berry!
-The Salac Berry raised Heracross's Speed!
+Heracross's Speed rose!
 
 The sandstorm rages.
 Heracross is buffeted by the sandstorm!

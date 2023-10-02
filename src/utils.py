@@ -2,7 +2,6 @@ from enum import Enum
 import pandas as pd
 import re
 from typing import Union
-from dataclasses import dataclass
 
 
 def match_big_stat_to_small(s: str) -> str:
@@ -65,30 +64,22 @@ class Status(Enum):
     FREEZE = 6
     FAINT = 7
 
-# Data classes for holding the types of things we might need to change during the second pass 
-@dataclass 
-class LeechSeedOddity():
-    def __init__(self, nick):
+# Data classes for holding the types of things we might need to change during the second pass  
+# message factory is defined as (player_num: int, pokemons_nick: str, cause: Optional(str)) -> str
+class GenericOddity():
+    def __init__(self, nick,pat,cause):
         self.nick = nick
-        self.amount_healed = 0
-        self.turns_healed = 0
+        self.hp_diff = 0
+        self.turns = 0
+        self.pat = pat
+        self.is_healing = None
+        self.cause = cause
     def __repr__(self):
-        return f'{self.nick=},{self.amount_healed=},{self.turns_healed=}'
+        return f'{self.nick=},{self.hp_diff=},{self.turns=},{self.is_healing=},{self.cause=}'
     def get_approximate_health(self):
-        return self.amount_healed / self.turns_healed
+        return self.hp_diff / self.turns
 
-class LifeOrbOddity():
-    def __init__(self, nick):
-        self.nick = nick
-        self.turns_damaged = 0
 
-class RecoilOddity():
-    def __init__(self, nick):
-        self.nick = nick
-        self.missing_hp = 0 
-        self.turns_damaged = 0
-    def get_approximate_health(self):
-        return self.missing_hp / self.turns_damaged
 
 
 
@@ -109,9 +100,6 @@ class SimplePokemon():
         self.hp -= amt
 
         # we dont need flooring because we actually want to go into negatives for leech / modern wish 
-        #if self.hp <= 0:
-            #self.status = Status.FAINT
-            #self.hp = 0
 
     def heal(self, amt: float) -> None:
         self.hp += amt
@@ -121,7 +109,6 @@ class SimplePokemon():
     def damage_safe(self, amt: float) -> None:
         self.hp -= amt
         if self.hp <= 0:
-            self.status = Status.FAINT
             self.hp = 0
 
     def status_string(self) -> str:
